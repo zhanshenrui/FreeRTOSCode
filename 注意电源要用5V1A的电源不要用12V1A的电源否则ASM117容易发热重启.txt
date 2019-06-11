@@ -1,0 +1,2 @@
+注意电源要用5V1A的电源,不要用12V1A的电源,否则ASM117容易发热重启
+烧录在选SW模式，不要选JTAG模式，option--debug--选jlink，setting--debug下面port选SW

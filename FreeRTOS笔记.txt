@@ -1,0 +1,59 @@
+//configTOTAL_HEAP_SIZE不能太大，太大会超过芯片的RAM，最后程序运行进入硬件错误
+//也不能太小，太小会卡在vPortSVCHandler函数里循环，如设为2048则程序不能运行，最后设为8*1024程序正常
+
+变量：
+c :  char 型变量.
+s : short 型变量.
+l : long型变量.
+u : 无符号型的前面.
+p : 指针变量的前面.
+当我们定义一个无符号的 char 型变量的时候会加一个 uc 前缀，当定义一个char 型的指针变量的时候会有一个 pc 前缀
+
+函数：
+函数名包含了函数返回值的类型、函数所在的文件名和函数的功能，如果是私有的函数则会加一个 prv（private）的前缀
+如：函数名前为v,表示返回值为void,如vTaskDelay，这个说明函数返回值为void，在task.c这个文件里
+函数名前为x,表示返回值为BaseType_t,其实就是long,如xTaskCreate，这个说明函数返回值为long,在task.c这个文件里
+prvTimerTask,这个说明函数是私有函数
+
+vTaskDelay表示延长多少个时间片，并不是延长多少毫秒，如vTaskDelay(100)表示延长100个时间片，当configTICK_RATE_HZ配置
+为1000时，表示时间片是1ms,vTaskDelay(100)表示延时100ms,当configTICK_RATE_HZ配置为500时，表示时间片是2ms,
+vTaskDelay(100)表示延时200ms
+
+stm32 FreeRTOS中断只能配置为组4，即只能有16个优先级。因为FreeRTOS不能处理亚优先级这种情况
+configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY表示FreeRTOS可管理的中断的最高优先级。configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY
+为5表示系统只能管理(如开关中断)做先级为5的中断，如一个中断的优先级为4，FreeRTOS就不能管理了也就不能控制了，也即在任务中，
+FreeRTOS可通过portDISABLE_INTERRUPTS在任务函数中关闭中断等级为5以下的中断，但不能关闭中断等级为4以上的中断(数字越小，中断等级越高)
+
+configLIBRARY_LOWEST_INTERRUPT_PRIORITY表示FreeRTOS可管理的中断的最低优先级。configLIBRARY_LOWEST_INTERRUPT_PRIORITY为15决定了STM32 FreeRTOS中断只能配置为组4，
+因为如果为组2，FreeRTOS只能管理16个，其他的不能管。
+
+中断是数字越低，做先级越高，但FreeRTOS的任务是数字越低，优先级越低。就绪态有多个任务时，优先级高的任务抢占CPU运行，当都是同优先级
+时，由时间片轮转调度器决定哪个任务运行
+
+新创建的任务默认就是就绪态的，如果当前没有比它更高优先级的任务那么新创建的任务就会立即进入运行态开始运行，不管在任务调度器启动前还
+是启动后vTaskStartScheduler()，都可以创建任务
+
+抢占只是任务切换时，优先级高的任务可以抢先运行，并不是说一个低优先级的任务正在运行，高优先级可以可以打断低优先级任务来运行高优先级任务，
+还是要等低优先级任务运行完，高优先级任务才可以抢占。所以高优先级任务被挂起或阻塞时，在低优先级任务里恢复或延时时间到，高做先级任务还是
+要等这个低优先级任务运行完才能抢占，所以vTaskResume不需要进行上下文切换。但当从中断里恢复高优先级任务时，因为中断执行完又进行任务切换，
+不一定会回到中断发生的时的任务里。如lowtask为低优先级任务，hightask为高优先级任务，当hightask被挂起时，在lowtask里运行时，发生中断(这个
+中断是可被FreeRTOS管理的中断，即中断优先级要小于configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY表)，在中断里用xTaskResumeFromISR来恢复
+hightask,中断执行完时就会进行任务切换，这时lowtask,hightask都处于就绪态，但hightask优先级高，这时会去执行hightask，如果不进行上下文切换，
+lowtask任务的运行环境就会被破坏，所以在中断里执行xTaskResumeFromISR函数时要判断其返回值并根据返回值做不同处理，即
+		YieldRequired=xTaskResumeFromISR(Task2Task_Handler);//恢复任务2
+		printf("恢复任务2的运行!\r\n");
+		if(YieldRequired==pdTRUE)
+		{
+			/*如果函数xTaskResumeFromISR()返回值为pdTRUE，那么说明要恢复的这个
+			任务的任务优先级等于或者高于正在运行的任务(被中断打断的任务),所以在
+			退出中断的时候一定要进行上下文切换！*/
+			/*即hightask>=lowtask时为真，要用portYIELD_FROM_ISR函数进行上下文切换*/
+			portYIELD_FROM_ISR(YieldRequired);
+		}
+总之，调用xTaskResumeFromISR函数时要用if(YieldRequired==pdTRUE){portYIELD_FROM_ISR(YieldRequired);}，把它当作一个规定即可
+
+如果一个任务没有while(1)让任务一直运行，任务执行后退出任务运行函数，但又没有用vTaskDelete(StartTask_Handler);删除这个
+任务就会有错误Error:..\FreeRTOS\portable\RVDS\ARM_CM3\port.c,244，这个错误不会在编译器提出，但会在输出界面提示，如果是
+串口printf输出，就会在串口输出这句话
+
+xTaskCreate最后一个参数是句柄指针，一定要加&，否则编译通过，但程序运行不正常，很难查问题出来
