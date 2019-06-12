@@ -1,7 +1,7 @@
 板子布局
 WAKEUP	TAMPER	USER1	USER2
-key0 	key1 	key2 	key3  	key_reset  	led0 	led1 	led2 	led3
-PA0  	PC13 	PA8  	PD3	 	NULL	    PF6  	PF7  	PF8  	PF9
+key0 	key1 	key2 	key_enter  	key_reset  	led0 	led1 	led2 	led3
+PA0  	PC13 	PA8  	PD3	 		NULL	    PF6  	PF7  	PF8  	PF9
 ---------------------------------			上
 |								|
 |								|

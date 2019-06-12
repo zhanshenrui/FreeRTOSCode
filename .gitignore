@@ -7,3 +7,8 @@ OBJ/
 *.axf
 *.htm
 *.lnp
+*.si4project
+*.uvguix.*
+*.uvoptx
+*.uvprojx
+*JLinkLog*

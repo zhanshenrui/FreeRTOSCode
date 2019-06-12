@@ -12,6 +12,8 @@ xTaskCreateµÚÒ»¸ö²ÎÊıÊÇÈÎÎñº¯Êı£¬µÚ¶ş¸ö²ÎÊıÊÇÈÎÎñÃû×Ö£¬ÒÔ±ãµ÷ÊÔÓÃ£¬µÚÈı¸ö²ÎÊıÊÇÈ
 delay_xms²»»áÒıÆğÈÎÎñÇĞ»»£¬µ«ÒòÎªÓĞÊ±¼äÆ¬ÇĞ»»£¬×îºó»¹ÊÇÍê³ÉÁËÇĞ»»¹¦ÄÜ
 configTICK_RATE_HZ=20
 printf("task1 run:%d\r\n",task1_num);´òÓ¡Ç°¶¼½øÈëÁË¹Ø¼ü¶Î£¬±ÜÃâÈÎÎñÇĞ»»¶Ô´òÓ¡ÓĞÓ°Ïì
+Èç¹ûtaskENTER_CRITICAL() ,taskEXIT_CRITICAL()²»Åä¶Ô£¬»áÌáÊ¾´íÎó Error:..\FreeRTOS\portable\RVDS\ARM_CM3\port.c,385
+
 */
 #include "sys.h"
 #include "delay.h"
@@ -28,7 +30,11 @@ int main(void)
 	uart_init(115200);					//³õÊ¼»¯´®¿Ú
 	LED_Init();		  					//³õÊ¼»¯LED
 
+	
+	//while(1)
+	{
 	printf("start\n");
+	}
 
 
 	xTaskCreate(start_task,
@@ -49,14 +55,14 @@ void start_task(void *pvParameters)
 		TSK_SIZE_128,
 		NULL,
 		TSK_PRIO_1,
-		Task1Task_Handler
+		&Task1Task_Handler
 		);
 	xTaskCreate(task2_task,
 		"task2_task",
 		TSK_SIZE_128,
 		NULL,
 		TSK_PRIO_1,
-		Task2Task_Handler
+		&Task2Task_Handler
 		);
 	
 	vTaskDelete(StartTask_Handler);
@@ -85,6 +91,7 @@ void task2_task(void *pvParameters)
     {
         task2_num++;
         LED1=!LED1;
+		taskENTER_CRITICAL();           //½øÈëÁÙ½çÇø
         printf("task2 run:%d\r\n",task2_num);
         taskEXIT_CRITICAL();
         delay_xms(10);
