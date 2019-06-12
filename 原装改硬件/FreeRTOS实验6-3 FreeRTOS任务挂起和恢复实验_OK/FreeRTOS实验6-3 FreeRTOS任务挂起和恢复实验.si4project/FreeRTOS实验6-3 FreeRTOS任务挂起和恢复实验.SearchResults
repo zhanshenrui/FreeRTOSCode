@@ -1,3 +1,0 @@
----- 挂起任务2 Matches (2 in 1 files) ----
-key_task in main.c (USER) : 				vTaskSuspend(Task2Task_Handler);//挂起任务2
-key_task in main.c (USER) : 				printf("挂起任务2的运行!\r\n");
