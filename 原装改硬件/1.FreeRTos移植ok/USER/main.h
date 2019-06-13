@@ -1,5 +1,8 @@
 #ifndef __MAIN_H
 #define __MAIN_H
+#include "queue.h"
+#include "key.h"
+#include "led.h"
 
 #define TSK_SIZE_128	128
 #define TSK_SIZE_50		50

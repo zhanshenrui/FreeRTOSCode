@@ -216,5 +216,86 @@ void Keyprocess_task(void *pvParameters)
 	}
 }
 
+extern QueueHandle_t Message_Queue;	//信息队列句柄
+
+void USART1_IRQHandler(void)                	//串口1中断服务程序
+{
+	u8 Res;
+	BaseType_t xHigherPriorityTaskWoken;
+	
+	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
+	{
+		Res =USART_ReceiveData(USART1);	//读取接收到的数据
+		
+		if((USART_RX_STA&0x8000)==0)//接收未完成
+			{
+			if(USART_RX_STA&0x4000)//接收到了0x0d
+			{
+				if(Res!=0x0a)
+					USART_RX_STA=0;//接收错误,重新开始
+				else 
+				USART_RX_STA|=0x8000;	//接收完成了 
+				}
+			else //还没收到0X0D
+				{	
+				if(Res==0x0d)
+					USART_RX_STA|=0x4000;
+				else
+					{
+					USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
+					USART_RX_STA++;
+					if(USART_RX_STA>(USART_REC_LEN-1))
+						USART_RX_STA=0;//接收数据错误,重新开始接收	  
+					}		 
+				}
+			}   		 
+     } 
+	
+	 //就向队列发送接收到的数据
+	if((USART_RX_STA&0x8000)&&(Message_Queue!=NULL))
+	{
+		xQueueSendFromISR(Message_Queue,USART_RX_BUF,&xHigherPriorityTaskWoken);//向队列中发送数据
+		
+		USART_RX_STA=0;	
+		memset(USART_RX_BUF,0,USART_REC_LEN);//清除数据接收缓冲区USART_RX_BUF,用于下一次数据接收
+	
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);//如果需要的话进行一次任务切换
+	}
+} 
+//定时器3中断服务函数
+void TIM3_IRQHandler(void)
+{
+	if(TIM_GetITStatus(TIM3,TIM_IT_Update)==SET) //溢出中断
+	{
+		FreeRTOSRunTimeTicks++;
+	}
+	TIM_ClearITPendingBit(TIM3,TIM_IT_Update);  //清除中断标志位
+}
+
+//定时器2中断服务函数
+void TIM2_IRQHandler(void)
+{
+	u8 *buffer;
+	BaseType_t xTaskWokenByReceive=pdFALSE;
+	BaseType_t err;
+	
+	if(TIM_GetITStatus(TIM2,TIM_IT_Update)==SET) //溢出中断
+	{
+		buffer=mymalloc(SRAMIN,USART_REC_LEN);
+        if(Message_Queue!=NULL)
+        {
+			memset(buffer,0,USART_REC_LEN);	//清除缓冲区
+			err=xQueueReceiveFromISR(Message_Queue,buffer,&xTaskWokenByReceive);//请求消息Message_Queue
+            if(err==pdTRUE)			//接收到消息
+            {
+				disp_str(buffer);	//在LCD上显示接收到的消息
+            }
+        }
+		myfree(SRAMIN,buffer);		//释放内存
+		
+		portYIELD_FROM_ISR(xTaskWokenByReceive);//如果需要的话进行一次任务切换
+	}
+	TIM_ClearITPendingBit(TIM2,TIM_IT_Update);  //清除中断标志位
+}
 
 

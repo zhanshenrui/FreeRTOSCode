@@ -93,44 +93,7 @@ void TIM2_Int_Init(u16 arr,u16 psc)
 	TIM_Cmd(TIM2, ENABLE);  							//使能TIM2		 
 }
 
-//定时器3中断服务函数
-void TIM3_IRQHandler(void)
-{
-	if(TIM_GetITStatus(TIM3,TIM_IT_Update)==SET) //溢出中断
-	{
-		FreeRTOSRunTimeTicks++;
-	}
-	TIM_ClearITPendingBit(TIM3,TIM_IT_Update);  //清除中断标志位
-}
 
-extern QueueHandle_t Message_Queue;	//信息队列句柄
-extern void disp_str(u8* str);
-
-//定时器2中断服务函数
-void TIM2_IRQHandler(void)
-{
-	u8 *buffer;
-	BaseType_t xTaskWokenByReceive=pdFALSE;
-	BaseType_t err;
-	
-	if(TIM_GetITStatus(TIM2,TIM_IT_Update)==SET) //溢出中断
-	{
-		buffer=mymalloc(SRAMIN,USART_REC_LEN);
-        if(Message_Queue!=NULL)
-        {
-			memset(buffer,0,USART_REC_LEN);	//清除缓冲区
-			err=xQueueReceiveFromISR(Message_Queue,buffer,&xTaskWokenByReceive);//请求消息Message_Queue
-            if(err==pdTRUE)			//接收到消息
-            {
-				disp_str(buffer);	//在LCD上显示接收到的消息
-            }
-        }
-		myfree(SRAMIN,buffer);		//释放内存
-		
-		portYIELD_FROM_ISR(xTaskWokenByReceive);//如果需要的话进行一次任务切换
-	}
-	TIM_ClearITPendingBit(TIM2,TIM_IT_Update);  //清除中断标志位
-}
 
 
 
