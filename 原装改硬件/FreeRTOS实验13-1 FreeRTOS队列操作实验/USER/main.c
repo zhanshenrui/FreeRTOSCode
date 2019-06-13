@@ -93,7 +93,7 @@ int main(void)
    // while(1)
     	{
     	printf("hello\r\n");
-				LCD_ShowString(00,16*4,8*16,16,16,"WAKEUP_KEY PRESS");
+		//LCD_ShowString(00,16*4,8*16,16,16,"WAKEUP_KEY PRESS");
     	}
 	
 	//LCD_ShowString(00,16*4,8*16,16,16,"WAKEUP_KEY PRESS");
