@@ -7,3 +7,6 @@ OBJ/
 *.axf
 *.htm
 *.lnp
+*.si4project/
+*.vuoptx
+*.uvprojx
