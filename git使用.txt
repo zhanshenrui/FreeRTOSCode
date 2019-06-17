@@ -1,0 +1,178 @@
+1.从未提交过的文件可以用.gitignore,如keil工程生成的obj中间文件
+2.已经推送（push）过的文件，想从git远程库中删除，并在以后的提交中忽略，但是却还想在本地保留这个文件,如keil工程生成的obj中间文件,不注意已经推送了
+	git rm -r --cached . #删除追踪状态
+	git add . 
+	git commit -m "fixed untracked files"
+
+	git rm --cached Xml/config.xml  Xml/config.xml 是要从远程库中删除的文件的路径，支持通配符*
+	git rm --cached -r */*/OBJ/	可以用*往下匹配多级目录，用-r递归
+3、已经推送（push）过的文件，想在以后的提交时忽略此文件，即使本地已经修改过，而且不删除git远程库中相应文件，如SI工程文件或者配置文件，可以在另一个客户端参考模板，但每个人的配置不一样，互不影响
+	git update-index --assume-unchanged Xml/config.xml  
+	如果要忽略一个目录，打开 git bash，cd到 目标目录下，执行：git update-index --assume-unchanged $(git ls-files | tr '\n' ' ')
+	$ git update-index --assume-unchanged */*/*.si4project/
+
+https://blog.csdn.net/ligang2585116/article/details/71094887	Git撤销&回滚操作
+常用命令
+经常用git status查看分支的变化
+	git clone
+	git add .
+	git diff HEAD	commit之前先用这个命令查看区别
+	git commit -m ""	文件只有commit后，文件才能受git管理，切换分支才能看得见文件的修改，如果不commit，所有分支都能看得见修改
+	git commit --amend
+	git log
+	git rebase -i xxxxxx	xxxxxx为commit的ID，然后修改
+	解决冲突时需要git add .一般不需要commit,可以在最后才commit
+	git rebase --continue
+	git rebase --abort
+	git pull
+	git status
+	git push
+	git push --force-with-lease
+	git checkout xxx
+	git checkout -b xxx
+	git branch -a
+	git remote
+	git merge --squash xxx	一般也需要git add. 也是最后才commit
+	git brancd -d xxx	-D强制删除
+	
+待解决问题：
+	1.远程无效commit怎么删除
+		本地用git rebase，drop,git add. ,git commit --amend将本地无效记录合并成一个有效记录，然后用
+		git push --force-with-lease [remoteName] [localBranchName]强推可以让远程仓库无效记录消失，变得跟本地分支一样
+	2.本地dev分支能不能推到远程master分支
+		git push --force-with-lease  origin dev:master		git push --force-with-lease  [remoteName] [localBranchName]:[remoteBranchName]
+		用git push就可以了，但一般而言如果想用本地的覆盖远程的，就需要--force-with-lease来强制覆盖
+	3.怎么将有很多commit记录的dev分支干净整洁地合并到master分支
+		先将dev分支清理干净，删除无效记录，然后切换到master分支再合并。具体步骤如下：
+			先将dev分支清理干净，删除无效记录
+				git log
+				git rebase -i commit的ID
+				第一条不动还是为pick,将后面的pick修改为drop,这样文件就会回到最开始commit的样子
+				修改冲突或是直接将可以用的文件与现在这个文件比较修改(因为前面经过无数次commit后的源代码文件一般是没问题
+					的，只需要将这个没问题的源代码文件复制出来然后跟原始的文件比较修改即可)
+				git add .	保存修改好的源代码文件
+				git commit --amend	这个命令会打开一个VI界面，修改原来的commit为合适的commit记录即可
+			切换到master分支
+				git checkout master
+			在master分支里合并dev分支
+			git merge --squash dev
+	4.提示错误error: failed to push some refs to 'git@github.com:zhanshenrui/first-pr.git'
+		1.未pull，先拉pull跟远程同步
+		2.已pull但还是提醒错误，因为远程跟本地不同，有冲突，但已确认本地是正确的可以用git push --force-with-lease [remoteName] [localBranchName]强推
+	5.pull时有冲突，怎么处理
+		打开有冲突文件，手动解决：1.如果远程是最新的，以远程为准修改文件，然后git add .,git commit就可以了，这样就拉取到了最新的远程仓库
+			2.如果本地文件是最新的，以本地文件为准，然后用git push --force-with-lease强制推送更新远程仓库，然后再拉取
+	6.sourcetree里master,dev为本地分支，origin/master,origin/dev为自己的远程仓库的分支，upstream/master,upstream/dev为开源方远程仓库的
+		分支,origin/HEAD表示当前远程分支，如果origin/HEAD跟origin/master在一起就表示当前远程分支是origin/master
+	7.回溯历史还不太会
+	8.pull request后，我们在本地修改，然后push到我们自己的远程仓库origin，开源方的远程仓库upstream也会被更新
+	9.github入门与实践	看第4章，第6章，第9章
+		以布署为中心：本书是从自己的远程origin/dev分支发pull request到开源方的upstream/master分支里的
+		以发布为中心：
+
+
+
+fork是在github复制一个自己的在线的项目，你拥有完全地权限，可以任意"蹂躏"。
+clone是在本地复制一份项目，除非你clone的是自己的项目，否则，你只能在本地修改，不能对其的操作push到github远程仓库。
+而且clone 可以随意clone只要不是在同一目录下多次clone即可。
+
+
+解决冲突只需要git add .就行，不需要git commit,如果git commit了又会产生新的无效commit记录
+git push [remoteName] [localBranchName]
+删除无效commit记录
+	
+
+
+一般有master分支，但我们开发时最好还是再开一个分支dev，然后在dev修改测试，修改测试完后一般dev分支会有许多commit，如果
+不处理直接推送会造成远程仓库也有很多commit，不利于后期维护，所以一般要在dev分支上把这些commit处理掉(假设第0-5条commit
+想合并成一个commit，则用git log查出第6条commit的ID，然后git rebase -i 第6条commit的ID，就会打开一个类似VI的界面，上面
+显示第0-5条commit的记录，且前面全是pick开头，这个VI界面的第一行就是第５条commit，然后按键盘i键，进入VI的插入模式以便
+编辑，第一行的pick不用变，从第二行开始把所有的pick全改成squash,然后按ESC键退出插入模式，输入wq保存退出VI界面，如果没
+冲突就会合并成一个commit,但一般而言都是有冲突的，命令行会提示哪些文件有冲突，找到这些文件用notepad软件找开一看，一般
+会发现<<<<<<======>>>>>等符号及冲突的内容，把这些符号去掉，把有冲突的内容改成正确的内容，然后notepad保存,再回到命令
+行界面git add .提交暂存，然后git rebase --continue继续合并，一直重复，直到第0-5条commit合并全部完成，会又打开VI界面，
+在VI界面把以前的commit删掉，重新写上你自己想要的commit，然后ESC，wq退出VI界面，这样就将第0-5条commit合并成一个commit
+了)。
+小窍门：将最后修改成功的文件夹复制一份，然后在解决冲突过程中直接用比较软件将有冲突的文件与这个复制的文件夹里的文件
+比较可快速解决冲突且不会引入新的错误，如果没有这个比较软件，手动修改冲突，有时会不注意敲错键盘，引入新错误，最后提交
+推送到远程又会不成功
+命令一般为：
+	git log
+	git rebase -i commit的ID
+	第一条不动还是为pick,将后面的pick修改为squash
+	修改冲突
+	git add .
+	git rebase --continue
+
+
+一般在自己的dev分支开发，开发成功后，将dev分支的commit合并成一个，然后再并入到自己的master，然后再推送到自己的远程仓库origin
+总之一点，尽量保证自己的远程仓库origin干净整洁，所以一般在本用用dev开发，开发成功后合并commit，再将本地dev分支合并到本地
+master，再推送到远程仓库origin，再推送request到开源方upstream。只要远程仓库origin干净整洁，本地的dev分支和本地master分支再
+杂乱也不怕，只要没将本地杂乱的dev或本地杂乱的master推到自己的远程仓库origin就没问题，一般可以在本地整理，或大不了把本地仓库
+删除重新克隆建本地仓库
+
+
+
+你没有远程仓库的权限，你先在github通过fork，复制自己的一份远程仓库，然后通过clone你自己这个远程副本到本地，进行修改，
+修改后push到自己的githu远程副本，然后在自己的远程副本通过github上的Pull request发起请求，这将会把你的修改请求发送到
+原始的仓库管理者，发出pull request后，github会自动检查冲突，然后通知原始仓库的管理者，有个Pull request，原始仓库管理检
+查请求，并对变化进行review，然后做出接受或者拒绝你的变更请求。
+
+一般而言，master是本地仓库的master分支，origin/master是自己的远程仓库的master分支，upstream/master是开源项目作者仓库的master分支
+使用git参与github开源项目
+1.fork你想参与的开源项目到你自己的github,开源项目就叫upstream,fork后到自己账户的项目就叫origin
+2.clone项目(自己的github)到本地
+	git clone https://github.com/zhanshenrui/betaflight.git mybetaflight	这样代码就会在mybetaflight文件夹里
+3.将项目原地址添加为远程仓库
+	git remote add upstream https://github.com/betaflight/betaflight.git	这样就有两个远程仓库，一个是upstream(原作者的远程仓库)，
+	一个是origin(自己github账号里的远程仓库)，还有一个本地仓库
+4.本地仓库创建branch，用于添加自己的修改
+	这只是一个约定成俗的方式，当然你也可以在master上添加修改，创建新的branch添加自己的修改的好处是，你可以同时添加多个修改，在一个
+	修改还没有被原作者merge时，你可以用master创建新的branch继续你的其它修改。
+	git branch test  //创建你test分支
+	git checkout test//切换到test分支
+5.在本地修改代码测试(因为前面已经切换到test分支，所以现在修改都是在test分支上)
+	修改代码前要保证自己的代码是与作者远程仓库相同的，所以要更新代码
+	git fetch upstream
+	git merge upstream/test	因为开发是在test分支上开发的，所以要将新代码合并到test分支上
+	修改代码，保存到暂存区git add，提交git commit
+6.将修改push到自己的github上
+	git push origin test:test
+7.在自己github账号里pull request到原作者的仓库里
+8.一般而言，向原作者pull request时最后commit记录不要多,所以一般我们要把test的一些commit用rebase,squash命令将多个commit整理成一个
+commit然后推送到自己的仓库origin再pull request,尽量保证自己的origin/master分支commit记录、pull request给原作者的commit记录尽量少
+
+使用git开发自己的项目
+因为是自己开发项目，不是开源项目，所以就不需pull request.
+2.clone项目(自己的github)到本地
+3.本地仓库创建branch，用于添加自己的修改
+	这只是一个约定成俗的方式，当然你也可以在master上添加修改，创建新的branch添加自己的修改的好处是，你可以同时添加多个修改，在一个
+	修改还没有被原作者merge时，你可以用master创建新的branch继续你的其它修改。比如在test分支上多次修改以及commit,经验证后再将test分
+	支合并到master分支(合并前可以将一些commit用rebase,squash命令合并成一个)，然后再推送到自己的远程仓库，这样master版本尽量是正式
+	版本，修改记录较少，commit也少
+	git branch test  //创建你test分支
+	git checkout test//切换到test分支
+4.在本地修改代码测试(因为前面已经切换到test分支，所以现在修改都是在test分支上)
+	修改代码前要保证自己的代码是与作者远程仓库相同的，所以要更新代码
+	git fetch upstream
+	git merge upstream/test	因为开发是在test分支上开发的，所以要将新代码合并到test分支上
+	修改代码，保存到暂存区git add，提交git commit
+	经验证后再将test分支合并到master分支(合并前可以将一些commit用rebase,squash命令合并成一个)，然后再推送到自己的远程仓库，这样
+	master版本尽量是正式版本，修改记录较少，commit也少
+5.将commit记录少的master分支push到自己的github上
+	git push origin
+	
+在一个work分支上的index.html文件修改代码并git add. git commit然后git checkout master切换到master分支上时，编辑器如notepad会提示
+index.html文件有修改，然后打开发现，刚刚修改的代码在这里并没有修改，还是跟原来的一样，这说明不同分支的文件互不影响
+
+但在work分支上提交了多次commit，然后git checkout master切换到master分支上，再git merge work(一般用git merge --no-ff work来实现合并
+并提交commit信息，一般合并都会产生部突，需要解决冲突，解决冲突需要git add .但不要git commit，否则又会产生新的无效commit)将work分支合
+并到master分支，再在master分支git log查看记录，发现在work分支上提交多次commit记录也会在master分支显示
+解决方法：
+	git checkout master切换到master分支
+	用git merge --squash work 用--squash参数，可以让work分支的多次commit记录不提交到master分支，如果有冲突要解决冲突
+	git commit -m "Merge branch 'work' into gh-pages"用commit为此次的合并作个commit记录
+	在master分支上用git log这时可以看到work分支的多次记录就没有同步到master分支上，而是我们上一步git commit的记录，这样就保持了master分支
+	的commit记录整洁干净，便于回溯
+	注意，--squash，--no-ff不能同时使用，一般推荐用--squash，然后自己手动提交合并的commit记录
+	work分支开发，master分友支一般是稳定的，要发布出去，所以在master分支合并work分支后，还要推到远程去，即用git push origin master更新自己的远程仓库
