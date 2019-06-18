@@ -1,0 +1,13 @@
+vTaskStartScheduler();
+vTaskDelay(10);
+Key_Queue=xQueueCreate(KEYMSG_Q_NUM,sizeof(u8));
+
+taskENTER_CRITICAL();																				taskEXIT_CRITICAL();
+xTaskCreate(start_task,"start_task",TSK_SIZE_256,NULL,TSK_PRIO_1,&StartTask_Handler);				vTaskDelete(StartTask_Handler);
+vTaskSuspend(Task1Task_Handler);																	vTaskResume(Task1Task_Handler);
+err=xQueueSend(Key_Queue, &key, 10);																xQueueReceive(Key_Queue, &getkey, portMAX_DELAY);
+
+xQueueSendFromISR(Message_Queue, USART_RX_BUF, &xHigherPriorityTaskWoken);portYIELD_FROM_ISR(xHigherPriorityTaskWoken);		
+err=xQueueReceiveFromISR(Message_Queue,buffer,&xTaskWokenByReceive);portYIELD_FROM_ISR(xTaskWokenByReceive);
+
+BinarySemaphore=xSemaphoreCreateBinary();

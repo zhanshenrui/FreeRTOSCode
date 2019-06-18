@@ -1,59 +1,99 @@
-//configTOTAL_HEAP_SIZE����̫��̫��ᳬ��оƬ��RAM�����������н���Ӳ������
-//Ҳ����̫С��̫С�Ῠ��vPortSVCHandler������ѭ��������Ϊ2048����������У������Ϊ8*1024��������
+//configTOTAL_HEAP_SIZE不能太大，太大会超过芯片的RAM，最后程序运行进入硬件错误
+//也不能太小，太小会卡在vPortSVCHandler函数里循环，如设为2048则程序不能运行，最后设为8*1024程序正常
 
-������
-c :  char �ͱ���.
-s : short �ͱ���.
-l : long�ͱ���.
-u : �޷����͵�ǰ��.
-p : ָ�������ǰ��.
-�����Ƕ���һ���޷��ŵ� char �ͱ�����ʱ����һ�� uc ǰ׺��������һ��char �͵�ָ�������ʱ�����һ�� pc ǰ׺
+变量：
+c :  char 型变量.
+s : short 型变量.
+l : long型变量.
+u : 无符号型的前面.
+p : 指针变量的前面.
+当我们定义一个无符号的 char 型变量的时候会加一个 uc 前缀，当定义一个char 型的指针变量的时候会有一个 pc 前缀
 
-������
-�����������˺�������ֵ�����͡��������ڵ��ļ����ͺ����Ĺ��ܣ������˽�еĺ�������һ�� prv��private����ǰ׺
-�磺������ǰΪv,��ʾ����ֵΪvoid,��vTaskDelay�����˵����������ֵΪvoid����task.c����ļ���
-������ǰΪx,��ʾ����ֵΪBaseType_t,��ʵ����long,��xTaskCreate�����˵����������ֵΪlong,��task.c����ļ���
-prvTimerTask,���˵��������˽�к���
+函数：
+函数名包含了函数返回值的类型、函数所在的文件名和函数的功能，如果是私有的函数则会加一个 prv（private）的前缀
+如：函数名前为v,表示返回值为void,如vTaskDelay，这个说明函数返回值为void，在task.c这个文件里
+函数名前为x,表示返回值为BaseType_t,其实就是long,如xTaskCreate，这个说明函数返回值为long,在task.c这个文件里
+prvTimerTask,这个说明函数是私有函数
 
-vTaskDelay��ʾ�ӳ����ٸ�ʱ��Ƭ���������ӳ����ٺ��룬��vTaskDelay(100)��ʾ�ӳ�100��ʱ��Ƭ����configTICK_RATE_HZ����
-Ϊ1000ʱ����ʾʱ��Ƭ��1ms,vTaskDelay(100)��ʾ��ʱ100ms,��configTICK_RATE_HZ����Ϊ500ʱ����ʾʱ��Ƭ��2ms,
-vTaskDelay(100)��ʾ��ʱ200ms
+vTaskDelay表示延长多少个时间片，并不是延长多少毫秒，如vTaskDelay(100)表示延长100个时间片，当configTICK_RATE_HZ配置
+为1000时，表示时间片是1ms,vTaskDelay(100)表示延时100ms,当configTICK_RATE_HZ配置为500时，表示时间片是2ms,
+vTaskDelay(100)表示延时200ms
 
-stm32 FreeRTOS�ж�ֻ������Ϊ��4����ֻ����16�����ȼ�����ΪFreeRTOS���ܴ��������ȼ��������
-configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY��ʾFreeRTOS�ɹ������жϵ�������ȼ���configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY
-Ϊ5��ʾϵͳֻ�ܹ���(�翪���ж�)���ȼ�Ϊ5���жϣ���һ���жϵ����ȼ�Ϊ4��FreeRTOS�Ͳ��ܹ�����Ҳ�Ͳ��ܿ����ˣ�Ҳ���������У�
-FreeRTOS��ͨ��portDISABLE_INTERRUPTS���������йر��жϵȼ�Ϊ5���µ��жϣ������ܹر��жϵȼ�Ϊ4���ϵ��ж�(����ԽС���жϵȼ�Խ��)
+stm32 FreeRTOS中断只能配置为组4，即只能有16个优先级。因为FreeRTOS不能处理亚优先级这种情况
+configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY表示FreeRTOS可管理的中断的最高优先级。configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY
+为5表示系统只能管理(如开关中断)做先级为5的中断，如一个中断的优先级为4，FreeRTOS就不能管理了也就不能控制了，也即在任务中，
+FreeRTOS可通过portDISABLE_INTERRUPTS在任务函数中关闭中断等级为5以下的中断，但不能关闭中断等级为4以上的中断(数字越小，中断等级越高)
 
-configLIBRARY_LOWEST_INTERRUPT_PRIORITY��ʾFreeRTOS�ɹ������жϵ�������ȼ���configLIBRARY_LOWEST_INTERRUPT_PRIORITYΪ15������STM32 FreeRTOS�ж�ֻ������Ϊ��4��
-��Ϊ���Ϊ��2��FreeRTOSֻ�ܹ���16���������Ĳ��ܹܡ�
+configLIBRARY_LOWEST_INTERRUPT_PRIORITY表示FreeRTOS可管理的中断的最低优先级。configLIBRARY_LOWEST_INTERRUPT_PRIORITY为15决定了STM32 FreeRTOS中断只能配置为组4，
+因为如果为组2，FreeRTOS只能管理16个，其他的不能管。
 
-�ж�������Խ�ͣ����ȼ�Խ�ߣ���FreeRTOS������������Խ�ͣ����ȼ�Խ�͡�����̬�ж������ʱ�����ȼ��ߵ�������ռCPU���У�������ͬ���ȼ�
-ʱ����ʱ��Ƭ��ת�����������ĸ���������
+中断是数字越低，做先级越高，但FreeRTOS的任务是数字越低，优先级越低。就绪态有多个任务时，优先级高的任务抢占CPU运行，当都是同优先级
+时，由时间片轮转调度器决定哪个任务运行
 
-�´���������Ĭ�Ͼ��Ǿ���̬�ģ������ǰû�б����������ȼ���������ô�´���������ͻ�������������̬��ʼ���У��������������������ǰ��
-��������vTaskStartScheduler()�������Դ�������
+新创建的任务默认就是就绪态的，如果当前没有比它更高优先级的任务那么新创建的任务就会立即进入运行态开始运行，不管在任务调度器启动前还
+是启动后vTaskStartScheduler()，都可以创建任务
 
-��ռֻ�������л�ʱ�����ȼ��ߵ���������������У�������˵һ�������ȼ��������������У������ȼ����Կ��Դ�ϵ����ȼ����������и����ȼ�����
-����Ҫ�ȵ����ȼ����������꣬�����ȼ�����ſ�����ռ�����Ը����ȼ����񱻹��������ʱ���ڵ����ȼ�������ָ�����ʱʱ�䵽�������ȼ�������
-Ҫ����������ȼ����������������ռ������vTaskResume����Ҫ�����������л����������ж���ָ������ȼ�����ʱ����Ϊ�ж�ִ�����ֽ��������л���
-��һ����ص��жϷ�����ʱ���������lowtaskΪ�����ȼ�����hightaskΪ�����ȼ����񣬵�hightask������ʱ����lowtask������ʱ�������ж�(���
-�ж��ǿɱ�FreeRTOS�������жϣ����ж����ȼ�ҪС��configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY��)�����ж�����xTaskResumeFromISR���ָ�
-hightask,�ж�ִ����ʱ�ͻ���������л�����ʱlowtask,hightask�����ھ���̬����hightask���ȼ��ߣ���ʱ��ȥִ��hightask������������������л���
-lowtask��������л����ͻᱻ�ƻ����������ж���ִ��xTaskResumeFromISR����ʱҪ�ж��䷵��ֵ�����ݷ���ֵ����ͬ��������
-		YieldRequired=xTaskResumeFromISR(Task2Task_Handler);//�ָ�����2
-		printf("�ָ�����2������!\r\n");
+
+
+可剥夺型内核是指低优先级任务运行过程中，高优先级任务因为等待时间到(osdelay)或等待的事件发生(如获取到信号量)而进入就绪太，高优先级任务会
+抢占CPU去执行高优先级任务从而进入运行态，这样低优先级任务就会被打断，感觉好像低优先级任务还未执行完，但高优先级任务执行完后进行任务切换
+时，1.如果没有比低优先级任务高的任务进入就绪态，就会进入低优先级任务，继续从上次被打断的地方开始执行任务；2.如果又有一个比低优先级任务高的
+任务进入就绪态，如中优先级任务进入就绪态，这时还不会进入低优先级任务执行，而是执行中优先级任务，如果恰好每次任务切换时都有比低优先级任务
+高的任务如中1，中2……的1个或多个中优先级任务进入就绪态，那么低优先级任务始终没法执行。
+
+高优先级任务被挂起或阻塞时，在低优先级任务里恢复或延时时间到，高做先级任务会立即进入就绪态，如果没有比这个高优先级任务更高的任务就会立即
+进入运行态来运行这个高优先级任务(有时会发生高优先级任务进入就绪态时，更高优先级任务恰好等待事件到而进入就绪态，这时更高优先级任务会进
+入运行态，而高优先级任务只能是就绪态等待运行)，注意调用vTaskResume或vTaskDelay最终都会调用portYIELD{
+portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;__dsb( portSY_FULL_READ_WRITE );__isb( portSY_FULL_READ_WRITE );}来保护任务现场来进行上下文
+切换(即任务切换)，所以调用vTaskResume或vTaskDelay不需要我们再执行上下文切换，FreeRTOS已经帮我们做好了。但当从中断里恢复高优先级任务时，就
+需要我们手动调用函数中断执行完又进行任务切换，因为xTaskResumeFromISR并没有调用portYIELD{
+portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;__dsb( portSY_FULL_READ_WRITE );__isb( portSY_FULL_READ_WRITE );}来保护现场，只是将恢复的任
+务加入了调度队列，并没用调用portYIELD来进入上下文切换，所以还需要我们根据情况手动调用portYIELD_FROM_ISR函数来进行上下文切换。如果被恢复的任
+务优先级高于被中断的任务，就需要手动调用portYIELD_FROM_ISR函数来执行上下文切换。如lowtask为低优先级任务，hightask为高优先级任务，当hightask
+被挂起时，在lowtask里运行时，发生中断(这个中断是可被FreeRTOS管理的中断，即中断优先级要小于configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY表)，
+在中断里用xTaskResumeFromISR来恢复hightask,中断执行完时就会进行上下文切换。如果没调用portYIELD_FROM_ISR这个函数，中断执行完发现有高优先级
+任务进入就绪态就会执行hightask，但这时因为没有调用portYIELD_FROM_ISR函数来保护现场，lowtask任务的运行环境就会被破坏，所以在中断里执行
+xTaskResumeFromISR函数时要判断其返回值并根据返回值做不同处理，即
+		YieldRequired=xTaskResumeFromISR(Task2Task_Handler);//恢复任务2
+		printf("恢复任务2的运行!\r\n");
 		if(YieldRequired==pdTRUE)
 		{
-			/*�������xTaskResumeFromISR()����ֵΪpdTRUE����ô˵��Ҫ�ָ������
-			������������ȼ����ڻ��߸����������е�����(���жϴ�ϵ�����),������
-			�˳��жϵ�ʱ��һ��Ҫ�����������л���*/
-			/*��hightask>=lowtaskʱΪ�棬Ҫ��portYIELD_FROM_ISR���������������л�*/
+			/*如果函数xTaskResumeFromISR()返回值为pdTRUE，那么说明要恢复的这个
+			任务的任务优先级等于或者高于正在运行的任务(被中断打断的任务),所以在
+			退出中断的时候一定要进行上下文切换！*/
+			/*即hightask>=lowtask时为真，要用portYIELD_FROM_ISR函数进行上下文切换*/
 			portYIELD_FROM_ISR(YieldRequired);
 		}
-��֮������xTaskResumeFromISR����ʱҪ��if(YieldRequired==pdTRUE){portYIELD_FROM_ISR(YieldRequired);}����������һ���涨����
+总之，调用xTaskResumeFromISR函数时要用if(YieldRequired==pdTRUE){portYIELD_FROM_ISR(YieldRequired);}，把它当作一个规定即可
+要等这个低优先级任务运行完才能抢占，所以vTaskResume不需要进行上下文切换
 
-���һ������û��while(1)������һֱ���У�����ִ�к��˳��������к���������û����vTaskDelete(StartTask_Handler);ɾ�����
-����ͻ��д���Error:..\FreeRTOS\portable\RVDS\ARM_CM3\port.c,244��������󲻻��ڱ�������������������������ʾ�������
-����printf������ͻ��ڴ��������仰
+低优先级任务可以被高优先级任务剥夺，但中断不能被高优先级任务剥夺
 
-xTaskCreate���һ�������Ǿ��ָ�룬һ��Ҫ��&���������ͨ�������������в����������Ѳ��������
+优先级反转
+hightask因为等待A事件发生处于挂起状态，midtask因为等待B事件发生处于挂起状态，lowtask任务执行，并获得了信号量C来访问共享资源，这时
+hightask等待到了A事件就剥夺了lowtask的CPU使用权，开始运行hightask，但hightask也要访问共享资源，但这时的信号量C在lowtask手里，所以
+hightask只能进入挂起状态，等待lowtask释放信号量C，这时lowtask继续运行，这时midtask等待到了B事件就剥夺了lowtask的CPU使用权，开始运
+行midtask,因为midtask不需要信号量C，所以lowtask不能影响midtask的运行，midtask运行完时间片后，将CPU使用权交还给lowtask，lowtask继续
+运行，完成所有工作并释放信号量C，hightask获得了信号量C重新进入运行。在这种情况下，midtask优先级比hightask低，但midtask先运行完，造
+成midtask好像比hightask优先级高一样，这就是优先级反转
+解决优先级反转方法使用互斥信号量，当lowtask占用互斥信号量C时，hightask申请互斥信号量C申请不到时，lowtask会被升级到hightask，这样
+midtask就不能剥夺升级后的lowtask的CPU使用权，只能等lowtask运行完毕，然后释放互斥量C，并降级lowtask的优先级，再然后hightask获取到
+互斥量C并运行完毕，再然后运行midtask，这样就不会发生midtask比hightask先运行情况，但这样好像会发生lowtask比midtask先运行的情况，
+孰优孰劣暂时说不清楚
+信号量请求(不管是普通的二值信号量还是计数型信号量，还是互斥信号量还是递归互斥信号量)不能用于中断函数中，因为中断函数不能因为要等待
+信号量而设置阻塞时间进入阻塞态。但可以发送信号量，中断里发送了信号量都要用portYIELD_FROM_ISR函数进行一次任务切换
+一般常用互斥信号量
+回调函数，中断函数中一定不要有阻塞任务的函数
+信号量只能在任务与(单个的事件或单个任务)进行同步，事件标志组能在任务与(多个事件或多个任务)进行同步
+
+
+如果一个任务没有while(1)让任务一直运行，任务执行后退出任务运行函数，但又没有用vTaskDelete(StartTask_Handler);删除这个
+任务就会有错误Error:..\FreeRTOS\portable\RVDS\ARM_CM3\port.c,244，这个错误不会在编译器提出，但会在输出界面提示，如果是
+串口printf输出，就会在串口输出这句话
+
+xTaskCreate最后一个参数是句柄指针，一定要加&，否则编译通过，但程序运行不正常，很难查问题出来
+
+LCD是个点阵屏字体，宽240个点，高320个点。
+1.12号字体为1206字体，即高12个点，宽6个点，即一个英文字母高为12个点，宽为6个点
+2.16号字体为1608字体，即高16个点，宽8个点
+3.24号字体为2412字体，即高24个点，宽12个点

@@ -93,7 +93,7 @@ int main(void)
    // while(1)
     	{
     	printf("hello\r\n");
-				LCD_ShowString(00,16*4,8*16,16,16,"WAKEUP_KEY PRESS");
+		//LCD_ShowString(00,16*4,8*16,16,16,"WAKEUP_KEY PRESS");
     	}
 	
 	//LCD_ShowString(00,16*4,8*16,16,16,"WAKEUP_KEY PRESS");
@@ -258,7 +258,7 @@ void TIM2_IRQHandler(void)
             if(err==pdTRUE)			//接收到消息
             {
 				disp_str(buffer);	//在LCD上显示接收到的消息
-				//printf("buff=%s\r\n",buffer);
+				printf("buff=%s\r\n",buffer);
             }
         }
 		myfree(SRAMIN,buffer);
