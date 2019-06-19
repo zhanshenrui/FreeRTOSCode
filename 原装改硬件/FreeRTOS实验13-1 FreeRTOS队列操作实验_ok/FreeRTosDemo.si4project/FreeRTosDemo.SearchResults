@@ -1,0 +1,4 @@
+---- vTaskStartScheduler Matches (3 in 3 files) ----
+main in main.c (USER) : 	vTaskStartScheduler();
+task.h (FreeRTOS\include) line 1112 : void vTaskStartScheduler( void ) PRIVILEGED_FUNCTION;
+tasks.c (FreeRTOS) line 1826 : void vTaskStartScheduler( void )

@@ -1,0 +1,5 @@
+---- printf Matches (4 in 3 files) ----
+FreeRTOSConfig.h (FreeRTOS\include) line 84 : #define vAssertCalled(char,int) printf("Error:%s,%d\r\n",char,int)
+LCD_Init in lcd.c (HARDWARE\LCD) :  	printf("LCD ID:0x%x\r\n",lcddev.id); //打印LCD ID   
+main in main.c (USER) : 	printf("start\n");
+DataProcess_task in main.c (USER) :                 printf("%s,%d\r\n",commandstr,len);
