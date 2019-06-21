@@ -1,0 +1,12 @@
+---- msg Matches (13 in 2 files) ----
+chatclinet.c line 9 : char msg[200];
+send_msg in chatclinet.c :         fgets(msg,100,stdin);
+send_msg in chatclinet.c :         if (!strcmp(msg, "q\n") || !strcmp(msg, "Q \n")) {
+send_msg in chatclinet.c :         sprintf(name_msg, "%s:%s", name, msg);
+chatserver.c line 18 : void error_handling(char *msg);
+handle_clnt in chatserver.c :     char msg[256];
+handle_clnt in chatserver.c :     while(strlen=read(mydata->clnt_sock,msg,sizeof(msg)))
+handle_clnt in chatserver.c :         printf("tid=%d,rcvmsg=%s\n\n",mydata->thread_id,msg);
+handle_clnt in chatserver.c :         write(mydata->clnt_sock,msg,strlen);
+chatserver.c line 89 : void error_handling(char *msg)
+error_handling in chatserver.c :     fputs(msg,stderr);
